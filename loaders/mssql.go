@@ -7,7 +7,7 @@ import (
 
 	"github.com/knq/snaker"
 
-	"github.com/xo/xo/internal"
+	"github.com/Code-Hex/xo/internal"
 	"github.com/xo/xo/models"
 )
 
