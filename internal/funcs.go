@@ -24,6 +24,7 @@ func (a *ArgType) NewTemplateFuncs() template.FuncMap {
 		"colvals":            a.colvals,
 		"colvalsmulti":       a.colvalsmulti,
 		"fieldnames":         a.fieldnames,
+		"fieldgetternames":   a.fieldgetternames,
 		"fieldnamesmulti":    a.fieldnamesmulti,
 		"goparamlist":        a.goparamlist,
 		"reniltype":          a.reniltype,
@@ -393,6 +394,34 @@ func (a *ArgType) fieldnames(fields []*Field, prefix string, ignoreNames ...stri
 			str = str + ", "
 		}
 		str = str + prefix + "." + f.Name
+		i++
+	}
+
+	return str
+}
+
+// fieldgetternames creates a list of field names from fields of the adding the
+// provided prefix, and excluding any Field with Name contained in ignoreNames.
+//
+// Used to present a comma separated list of field names, ie in a Go statement
+// (ie, "t.Field1, t.Field2, t.Field3 ...")
+func (a *ArgType) fieldgetternames(fields []*Field, prefix string, ignoreNames ...string) string {
+	ignore := map[string]bool{}
+	for _, n := range ignoreNames {
+		ignore[n] = true
+	}
+
+	str := ""
+	i := 0
+	for _, f := range fields {
+		if ignore[f.Name] {
+			continue
+		}
+
+		if i != 0 {
+			str = str + ", "
+		}
+		str = str + prefix + ".Get" + f.Name + "()"
 		i++
 	}
 
