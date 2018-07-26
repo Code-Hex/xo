@@ -24,6 +24,7 @@ func (a *ArgType) NewTemplateFuncs() template.FuncMap {
 		"colvals":            a.colvals,
 		"colvalsmulti":       a.colvalsmulti,
 		"fieldnames":         a.fieldnames,
+		"fieldToLowerNames":  a.fieldToLowerNames,
 		"fieldgetternames":   a.fieldgetternames,
 		"fieldnamesmulti":    a.fieldnamesmulti,
 		"goparamlist":        a.goparamlist,
@@ -394,6 +395,29 @@ func (a *ArgType) fieldnames(fields []*Field, prefix string, ignoreNames ...stri
 			str = str + ", "
 		}
 		str = str + prefix + "." + f.Name
+		i++
+	}
+
+	return str
+}
+
+func (a *ArgType) fieldToLowerNames(fields []*Field, prefix string, ignoreNames ...string) string {
+	ignore := map[string]bool{}
+	for _, n := range ignoreNames {
+		ignore[n] = true
+	}
+
+	str := ""
+	i := 0
+	for _, f := range fields {
+		if ignore[f.Name] {
+			continue
+		}
+
+		if i != 0 {
+			str = str + ", "
+		}
+		str = str + prefix + "." + strings.ToLower(f.Name)
 		i++
 	}
 
