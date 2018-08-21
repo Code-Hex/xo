@@ -1,6 +1,6 @@
 package internal
 
-import "github.com/xo/xo/models"
+import "github.com/Code-Hex/xo/models"
 
 // TemplateType represents a template type.
 type TemplateType uint
@@ -14,6 +14,7 @@ const (
 	IndexTemplate
 	QueryTypeTemplate
 	QueryTemplate
+	SetTemplate
 
 	// always last
 	XOTemplate
@@ -39,6 +40,8 @@ func (tt TemplateType) String() string {
 		s = "querytype"
 	case QueryTemplate:
 		s = "query"
+	case SetTemplate:
+		s = "set"
 	default:
 		panic("unknown TemplateType")
 	}
@@ -86,12 +89,29 @@ type EnumValue struct {
 	Comment string
 }
 
+// SetValue holds data for a single set value.
+type SetValue struct {
+	Name    string
+	Val     *models.SetValue
+	Comment string
+}
+
 // Enum is a template item for a enum.
 type Enum struct {
 	Name              string
 	Schema            string
 	Values            []*EnumValue
 	Enum              *models.Enum
+	Comment           string
+	ReverseConstNames bool
+}
+
+// Set is a template item for a set.
+type Set struct {
+	Name              string
+	Schema            string
+	Values            []*SetValue
+	Set               *models.Set
 	Comment           string
 	ReverseConstNames bool
 }

@@ -8,7 +8,7 @@ import (
 	"github.com/knq/snaker"
 
 	"github.com/Code-Hex/xo/internal"
-	"github.com/xo/xo/models"
+	"github.com/Code-Hex/xo/models"
 )
 
 func init() {
@@ -20,6 +20,8 @@ func init() {
 		ParseType:       MyParseType,
 		EnumList:        models.MyEnums,
 		EnumValueList:   MyEnumValues,
+		SetList:         models.MySets,
+		SetValueList:    MySetValues,
 		ProcList:        models.MyProcs,
 		ProcParamList:   models.MyProcParams,
 		TableList:       MyTables,
@@ -237,6 +239,28 @@ func MyEnumValues(db models.XODB, schema string, enum string) ([]*models.EnumVal
 	}
 
 	return enumVals, nil
+}
+
+// MySetValues loads the set values.
+func MySetValues(db models.XODB, schema string, enum string) ([]*models.SetValue, error) {
+	var err error
+
+	// load enum vals
+	res, err := models.MySetValues(db, schema, enum)
+	if err != nil {
+		return nil, err
+	}
+
+	// process enum vals
+	setVals := []*models.SetValue{}
+	for i, ev := range strings.Split(res.SetValues[1:len(res.SetValues)-1], "','") {
+		setVals = append(setVals, &models.SetValue{
+			SetValue:   ev,
+			ConstValue: 1 << uint(i),
+		})
+	}
+
+	return setVals, nil
 }
 
 // MyTables returns the MySql tables with the manual PK information added.

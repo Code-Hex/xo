@@ -8,7 +8,7 @@ import (
 	"github.com/gedex/inflector"
 	"github.com/knq/snaker"
 
-	"github.com/xo/xo/models"
+	"github.com/Code-Hex/xo/models"
 )
 
 // Loader is the common interface for database drivers that can generate code
@@ -52,6 +52,8 @@ type TypeLoader struct {
 	ParseType       func(*ArgType, string, bool) (int, string, string)
 	EnumList        func(models.XODB, string) ([]*models.Enum, error)
 	EnumValueList   func(models.XODB, string, string) ([]*models.EnumValue, error)
+	SetList         func(models.XODB, string) ([]*models.Set, error)
+	SetValueList    func(models.XODB, string, string) ([]*models.SetValue, error)
 	ProcList        func(models.XODB, string) ([]*models.Proc, error)
 	ProcParamList   func(models.XODB, string, string) ([]*models.ProcParam, error)
 	TableList       func(models.XODB, string, string) ([]*models.Table, error)
@@ -253,6 +255,12 @@ func (tl TypeLoader) LoadSchema(args *ArgType) error {
 		return err
 	}
 
+	// load sets
+	_, err = tl.LoadSets(args)
+	if err != nil {
+		return err
+	}
+
 	// load procs
 	_, err = tl.LoadProcs(args)
 	if err != nil {
@@ -359,6 +367,82 @@ func (tl TypeLoader) LoadEnumValues(args *ArgType, enumTpl *Enum) error {
 		}
 
 		enumTpl.Values = append(enumTpl.Values, &EnumValue{
+			Name: name,
+			Val:  ev,
+		})
+	}
+
+	return nil
+}
+
+// LoadSets loads schema set.
+func (tl TypeLoader) LoadSets(args *ArgType) (map[string]*Set, error) {
+	var err error
+
+	// not supplied, so bail
+	if tl.SetList == nil {
+		return nil, nil
+	}
+
+	// load enums
+	setList, err := tl.SetList(args.DB, args.Schema)
+	if err != nil {
+		return nil, err
+	}
+
+	// process enums
+	setMap := map[string]*Set{}
+	for _, e := range setList {
+		setTpl := &Set{
+			Name:              SingularizeIdentifier(e.SetName),
+			Schema:            args.Schema,
+			Values:            []*SetValue{},
+			Set:               e,
+			ReverseConstNames: args.UseReversedEnumConstNames,
+		}
+
+		err = tl.LoadSetValues(args, setTpl)
+		if err != nil {
+			return nil, err
+		}
+
+		setMap[setTpl.Name] = setTpl
+		args.KnownTypeMap[setTpl.Name] = true
+	}
+
+	// generate enum templates
+	for _, e := range setMap {
+		err = args.ExecuteTemplate(SetTemplate, e.Name, "", e)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return setMap, nil
+}
+
+// LoadSetValues loads schema set values.
+func (tl TypeLoader) LoadSetValues(args *ArgType, setTpl *Set) error {
+	var err error
+
+	// load enum values
+	setValues, err := tl.SetValueList(args.DB, args.Schema, setTpl.Set.SetName)
+	if err != nil {
+		return err
+	}
+
+	// process enum values
+	for _, ev := range setValues {
+		// chop off redundant enum name if applicable
+		name := snaker.SnakeToCamelIdentifier(ev.SetValue)
+		if strings.HasSuffix(strings.ToLower(name), strings.ToLower(setTpl.Name)) {
+			n := name[:len(name)-len(setTpl.Name)]
+			if len(n) > 0 {
+				name = n
+			}
+		}
+
+		setTpl.Values = append(setTpl.Values, &SetValue{
 			Name: name,
 			Val:  ev,
 		})
