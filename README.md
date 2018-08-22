@@ -1,3 +1,15 @@
+# Forked xo written by Code-Hex
+
+xo (Golang package: xo) is a package for Go that automatically generates go code from sql schema.
+original: xo/xo
+
+The following are the main changes that have been made.
+
+## Changes
+
+- We can use [sprig](https://github.com/Masterminds/sprig) in xo template code.
+- Can parse `set` type of mysql. see [mysql.set.go.tpl](https://github.com/Code-Hex/xo/blob/master/templates/mysql.set.go.tpl)
+
 # About xo
 
 `xo` is a command-line tool to generate [Go](https://golang.org/project/)
